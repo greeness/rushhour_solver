@@ -37,8 +37,8 @@ class Block :
                        "TRUCK", "OBSTACLE", "EMPTY"])
     
     # static class variable to uniquely identify a block
-    _id = 0
-    def __init__(self, x, y, length, kind, isVertical=True, myid=-1):
+    #_id = 0
+    def __init__(self, x, y, length, kind, isVertical=True):
         assert(0 <= y < Board.Size)
         self._y = y
         assert(0 <= x < Board.Size)
@@ -47,18 +47,15 @@ class Block :
         assert(1 <= length <= 3)
         self._length = length
         self._isVertical = isVertical
-        if myid == -1:
-            self._id = Block._id
-            Block._id += 1
-        else:
-            self._id = myid
         if self._kind == Block.BlockKinds.OBSTACLE:
             self._isMovable = False
             self._isErasable = True
         else:
             self._isMovable = True
             self.IsErasable = False
-        self._name = Block.ObjNames[self._id]
+        self._id = -1
+        self._name = ""
+        
         
     def __hash__(self):
         """
@@ -98,12 +95,26 @@ class Board:
         self._data = [[' ' for _ in xrange(Board.Size)] 
                         for _ in xrange(Board.Size)]
         self._blocks = []
+        
+    def IsBlockAddable(self, block):
+        if not block._isVertical:
+            for i in xrange(block._length):
+                # We cannot add a block to contains an non-empty tile
+                if block._y+i >= Board.Size or self._data[block._x][block._y+i] != ' ':
+                    return False                
+        else:
+            for i in xrange(block._length):
+                if block._x+i >= Board.Size or self._data[block._x+i][block._y] != ' ':
+                    return False
+        return True
     
     def AddBlock(self, block):
         """ Add a building block to the board """
+        block._id = len(self._blocks)
+        block._name = Block.ObjNames[block._id]
         self._blocks.append(block)
         self.AddBlockInData(block._id)
-        
+               
     def AddBlue(self, x, y):
         self.AddBlock(Block(x, y, 2, 
                             Block.BlockKinds.BLUE_CAR, False))
@@ -131,6 +142,13 @@ class Board:
                 return True
         return False
     
+    def ReplaceBlock(self, blockId, block):
+        self.ClearBlockInData(blockId)
+        block._id = blockId
+        block._name = Block.ObjNames[blockId]
+        self._blocks[blockId] = block
+        self.AddBlockInData(blockId)
+    
     def TryMove(self, blockId, direction):
         """ Try to move a given block in the specified direction by 1 step.
             If we cannot move in such a direction (border constrain, blocked by other cars,
@@ -152,7 +170,7 @@ class Board:
             if self._data[block._x][block._y-1] != ' ':
                 return None
             return Block(block._x, block._y-1, block._length, 
-                         block._kind, block._isVertical, block._id)
+                         block._kind, block._isVertical)
             
         if direction == Board.Direction.RIGHT:
             if block._y + block._length == Board.Size:
@@ -160,14 +178,14 @@ class Board:
             if self._data[block._x][block._y + block._length] != ' ':
                 return None
             return Block(block._x, block._y+1, block._length, 
-                         block._kind, block._isVertical, block._id)
+                         block._kind, block._isVertical)
         if direction == Board.Direction.DOWN:
             if block._x + block._length == Board.Size:
                 return None
             if self._data[block._x+block._length][block._y] != ' ':
                 return None
             return Block(block._x+1, block._y, block._length, 
-                         block._kind, block._isVertical, block._id)
+                         block._kind, block._isVertical)
         # Since we will always use /IsEndingState/ to check, we assume we are never
         # at a ending_move state here.
         if direction == Board.Direction.UP:
@@ -176,7 +194,7 @@ class Board:
             if self._data[block._x-1][block._y] != ' ':
                 return None
             return Block(block._x-1, block._y, block._length, 
-                         block._kind, block._isVertical, block._id)
+                         block._kind, block._isVertical)
    
     def Move(self):
         """ For a given board state, try every possible moving action for any movable
@@ -203,9 +221,7 @@ class Board:
             if newBlock:
                 newBoard = copy.deepcopy(self)
                 # Update the 2-d data in the new Board
-                newBoard.ClearBlockInData(blockId)
-                newBoard._blocks[blockId] = newBlock
-                newBoard.AddBlockInData(blockId)
+                newBoard.ReplaceBlock(blockId, newBlock)
                 newBoardQueue.append((blockId, newBoard))
         return newBoardQueue
                     
@@ -264,9 +280,9 @@ class Board:
         print "Totally %d Known objects on Board; board hash value %d" \
             % (len(self._blocks), hash(self))
         for block in sorted(self._blocks):
-            print "ID: %2d, Name: %s, Type: %12s At (%d,%d), Length %d, hash %d" \
+            print "ID: %2d, Name: %s, Type: %12s At (%d,%d), Length %d, IsVertical %d, hash %d" \
                 % (block._id, block._name, \
-                   block._kind, block._x, block._y, block._length, hash(block))
+                   block._kind, block._x, block._y, block._length, block._isVertical, hash(block))
             
     def __hash__(self):
         """ To create a hash for a board, just add each block to construct a tuple 
@@ -414,3 +430,4 @@ def TestTryMove():
         
 if __name__ == "__main__":
     TestTryMove()
+    
