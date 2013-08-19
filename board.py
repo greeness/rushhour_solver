@@ -87,13 +87,6 @@ class Block :
     def __cmp__(self, other):
         return cmp(hash(self), hash(other))
 
-class Move: 
-    
-    def __init__(self, blockId, direction, steps):
-        self._blockId = blockId
-        self._direction = direction
-        self._steps = steps
-
 class Board:
     Size = 6
     Direction = Enum(["UP", "DOWN", "LEFT", "RIGHT"])
@@ -395,10 +388,10 @@ class BoardFactory:
 
 def TestTryMove():
     b = BoardFactory.CreateEasyBoard()
-    for (blockId, direction, board) in b.Move():
+    for (blockId, board) in b.Move():
         print "="*80, "before Moving"
         b.PrintData()
-        print "Move %s to %s, resulting ..." % (board._blocks[blockId]._name, direction)
+        print "Move %s , resulting ..." % (board._blocks[blockId]._name)
         board.PrintData()    
         
 if __name__ == "__main__":
