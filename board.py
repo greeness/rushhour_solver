@@ -94,11 +94,13 @@ class Board:
         self.Clear()
         
     def Clear(self):
+        """ Reset the internal data and block list """
         self._data = [[' ' for _ in xrange(Board.Size)] 
                         for _ in xrange(Board.Size)]
         self._blocks = []
     
     def AddBlock(self, block):
+        """ Add a building block to the board """
         self._blocks.append(block)
         self.AddBlockInData(block._id)
         
@@ -122,6 +124,7 @@ class Board:
                             Block.BlockKinds.TRUCK, isVertical))        
     
     def IsEndingState(self):
+        """ Check if we are at the state that is ending the game successfully """
         for block in self._blocks:
             if (block._kind == Block.BlockKinds.D and 
                 block._x == 0 and block._y == 2):
@@ -129,6 +132,11 @@ class Board:
         return False
     
     def TryMove(self, blockId, direction):
+        """ Try to move a given block in the specified direction by 1 step.
+            If we cannot move in such a direction (border constrain, blocked by other cars,
+              return None.
+            Otherwise, return the new block object after moving.
+        """
         assert 0 <= blockId < len(self._blocks)
         block = self._blocks[blockId]
         assert block._kind != Block.BlockKinds.OBSTACLE
@@ -171,6 +179,10 @@ class Board:
                          block._kind, block._isVertical, block._id)
    
     def Move(self):
+        """ For a given board state, try every possible moving action for any movable
+        object. 
+        Return a list of (blockId, new Board) resulting from any possible moves. 
+        """
         actionQueue = []
         for block in self._blocks:
             if block._kind == Block.BlockKinds.OBSTACLE:
@@ -186,9 +198,11 @@ class Board:
         
         newBoardQueue = []
         for (blockId, direction) in actionQueue:
+            # Apply the move opeartion in the given direction
             newBlock = self.TryMove(blockId, direction)
             if newBlock:
                 newBoard = copy.deepcopy(self)
+                # Update the 2-d data in the new Board
                 newBoard.ClearBlockInData(blockId)
                 newBoard._blocks[blockId] = newBlock
                 newBoard.AddBlockInData(blockId)
@@ -196,6 +210,7 @@ class Board:
         return newBoardQueue
                     
     def ClearBlockInData(self, blockId):
+        """ Used after a block is moved to clear the 2-d tile """
         block = self._blocks[blockId]
         if not block._isVertical:
             for i in xrange(block._length):
@@ -205,6 +220,8 @@ class Board:
                 self._data[block._x+i][block._y] = ' '
     
     def AddBlockInData(self, blockId):
+        """ Used after a new block is added or a block is moved to update
+        the 2d tiles"""
         block = self._blocks[blockId]
         if block._kind == Block.BlockKinds.EMPTY:
             c = ' '
@@ -223,6 +240,7 @@ class Board:
                 self._data[block._x+i][block._y] = c        
     
     def BlocksToData(self):
+        """ Refresh the 2d tile data completed according to the current block list"""
         self._data = [[' ' for _ in xrange(Board.Size)] 
                         for _ in xrange(Board.Size)]
         for block in self._blocks:

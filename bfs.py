@@ -1,8 +1,11 @@
 from collections import deque
 from board import BoardFactory
 
-def BFS():
-    board = BoardFactory.CreateEasyBoard()
+def BFS(board):
+    """ Breadth-first search on a given board to find the optimal solution with the 
+    minimum number of moves; after it finds the best solution, the algorithm continues
+    to iterate all possible states to report the total state space (optinally).
+    """
     queue = deque()
     # -1 indicates the starting state
     queue.append((-1, board, 0))
@@ -21,8 +24,7 @@ def BFS():
             if not found:
                 print "Food Delivered in %d steps after explored %d states" \
                     % (depth, visited)
-                found = True
-        
+                found = True 
         for (blockId, new_board) in board.Move():
             if hash(new_board) not in seen:
                 queue.append((blockId, new_board, depth+1))
@@ -38,7 +40,8 @@ def BFS():
         print "Total states %d" % (visited)
 
 if __name__ == "__main__":
-    BFS()
+    board = BoardFactory.CreateEasyBoard()
+    BFS(board)
     print "DONE"
     
     
