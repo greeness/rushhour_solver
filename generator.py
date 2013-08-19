@@ -33,7 +33,7 @@ class Generator:
             self.board.AddDelivery(4, 2)
             num_tries = 0
             # filling in object until we think there are enough
-            while len(self.board._blocks) <= 10:
+            while len(self.board._blocks) <= random.randint(9,12):
                 # pick a position to place the next object
                 x = random.randint(0, 5)
                 y = random.randint(0, 5)
@@ -41,19 +41,15 @@ class Generator:
                 if (x <= 4 and y == 2 and (obj._kind == Block.BlockKinds.OBSTACLE or
                                            obj._isVertical)):
                     continue
-                num_tries += 1
-                
+                num_tries += 1               
                 if self.board.IsBlockAddable(obj):
                     self.board.AddBlock(obj)
-                    print "add an obj %s at (%d,%d)" % (obj._kind, x, y)
-            
-            print "generate a board after %d tries" % num_tries
-            self.board.PrintData()
             minSteps = BFS(self.board, visitAll=False)
             if minSteps >= 15:
-                break
-            else:
-                print "min steps is %d " % minSteps
+                print "Found a board with %d moves" % minSteps
+                self.board.PrintData()
+                self.board.PrintBlocksInfo()
+
 if __name__ == "__main__":
     #random.seed(0)
     bg = Generator()

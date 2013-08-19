@@ -26,8 +26,8 @@ def BFS(board, visitAll=True):
         if board.IsEndingState():
             # let's trace back
             if minSteps == -1:
-                print "Food Delivered in %d steps after explored %d states" \
-                    % (depth, visited)
+                #print "Food Delivered in %d steps after explored %d states" \
+                #    % (depth, visited)
                 minSteps = depth
                 if not visitAll:
                     break
@@ -37,9 +37,9 @@ def BFS(board, visitAll=True):
                 seen.add(hash(new_board))
             else:
                 met_dups += 1
-        if (visited % 100 == 0):
-            print "visited %6d, depth %3d, queue size %6d, met dups %12d times"  \
-                % (visited, depth, len(queue), met_dups)
+        #if (visited % 100 == 0):
+        #    print "visited %6d, depth %3d, queue size %6d, met dups %12d times"  \
+        #        % (visited, depth, len(queue), met_dups)
            
     return minSteps
 
