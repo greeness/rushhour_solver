@@ -88,7 +88,7 @@ class Block :
         return cmp(hash(self), hash(other))
 
 class Move: 
-    Direction = Enum(["UP", "DOWN", "LEFT", "RIGHT"])
+    
     def __init__(self, blockId, direction, steps):
         self._blockId = blockId
         self._direction = direction
@@ -96,6 +96,7 @@ class Move:
 
 class Board:
     Size = 6
+    Direction = Enum(["UP", "DOWN", "LEFT", "RIGHT"])
     def __init__(self):
         self.Clear()
         
@@ -103,25 +104,29 @@ class Board:
         self._data = [[' ' for _ in xrange(Board.Size)] 
                         for _ in xrange(Board.Size)]
         self._blocks = []
+    
+    def AddBlock(self, block):
+        self._blocks.append(block)
+        self.AddBlockInData(block._id)
         
     def AddBlue(self, x, y):
-        self._blocks.append(Block(x, y, 2, 
-                                  Block.BlockKinds.BLUE_CAR, False))
+        self.AddBlock(Block(x, y, 2, 
+                            Block.BlockKinds.BLUE_CAR, False))
     def AddPlant(self, x, y):
-        self._blocks.append(Block(x, y, 1, 
-                                  Block.BlockKinds.OBSTACLE, False))
+        self.AddBlock(Block(x, y, 1, 
+                            Block.BlockKinds.OBSTACLE, False))
         
     def AddDelivery(self, x, y):
-        self._blocks.append(Block(x, y, 2,
-                                  Block.BlockKinds.D, True))
+        self.AddBlock(Block(x, y, 2,
+                            Block.BlockKinds.D, True))
         
     def AddPurple(self, x, y):
-        self._blocks.append(Block(x, y, 2, 
-                                  Block.BlockKinds.PURPLE_CAR, True))
+        self.AddBlock(Block(x, y, 2, 
+                      Block.BlockKinds.PURPLE_CAR, True))
     
     def AddTruck(self, x, y, isVertical=True):
-        self._blocks.append(Block(x, y, 3, 
-                                  Block.BlockKinds.TRUCK, isVertical))        
+        self.AddBlock(Block(x, y, 3, 
+                            Block.BlockKinds.TRUCK, isVertical))        
     
     def IsEndingState(self):
         for block in self._blocks:
@@ -130,63 +135,45 @@ class Board:
                 return True
         return False
     
-    def TryMove1(self, blockId, direction):
-        #print "Checking: Move block %s and try direction %s" \
-        #    %(Block.ObjNames[blockId], direction)
+    def TryMove(self, blockId, direction):
         assert 0 <= blockId < len(self._blocks)
         block = self._blocks[blockId]
         assert block._kind != Block.BlockKinds.OBSTACLE
         assert \
             (block._isVertical == True and \
-            (direction == Move.Direction.UP or direction == Move.Direction.DOWN)) or \
+            (direction == Board.Direction.UP or direction == Board.Direction.DOWN)) or \
             (block._isVertical == False and \
-            (direction == Move.Direction.LEFT or direction == Move.Direction.RIGHT))
+            (direction == Board.Direction.LEFT or direction == Board.Direction.RIGHT))
         
-        if direction == Move.Direction.LEFT:
+        if direction == Board.Direction.LEFT:
             if block._y == 0:
-                #print " = Touching left border, cannot move left any more"
                 return None
             if self._data[block._x][block._y-1] != ' ':
-                #print " = There is no empty space to move left"
                 return None
-            #print " = Moved block %s to left: (%d,%d)" \
-            #    % (Block.ObjNames[block._id], block._x, block._y-1)
             return Block(block._x, block._y-1, block._length, 
                          block._kind, block._isVertical, block._id)
             
-        if direction == Move.Direction.RIGHT:
+        if direction == Board.Direction.RIGHT:
             if block._y + block._length == Board.Size:
-                #print " = Touching right border, cannot move right any more"
                 return None
             if self._data[block._x][block._y + block._length] != ' ':
-                #print " = There is no empty space to move right"
                 return None
-            #print " = Moved block %s to right: (%d,%d)" \
-            #    % (Block.ObjNames[block._id], block._x, block._y+1)
             return Block(block._x, block._y+1, block._length, 
                          block._kind, block._isVertical, block._id)
-        if direction == Move.Direction.DOWN:
+        if direction == Board.Direction.DOWN:
             if block._x + block._length == Board.Size:
-                #print " = Touching bottom border, cannot move down any more"
                 return None
             if self._data[block._x+block._length][block._y] != ' ':
-                #print " = There is no empty space to move right"
                 return None
-            #print " = Moved block %s to down: (%d, %d)" \
-            #    % (Block.ObjNames[block._id], block._x+1, block._y)
             return Block(block._x+1, block._y, block._length, 
                          block._kind, block._isVertical, block._id)
         # Since we will always use /IsEndingState/ to check, we assume we are never
         # at a ending_move state here.
-        if direction == Move.Direction.UP:
+        if direction == Board.Direction.UP:
             if block._x == 0:
-                #print " = Touching top border, cannot move up any more"
                 return None
             if self._data[block._x-1][block._y] != ' ':
-                #print " = There is no empty space to move up"
                 return None
-            #print " = Moved block %s to up: (%d, %d)" \
-            #    % (Block.ObjNames[block._id], block._x-1, block._y)
             return Block(block._x-1, block._y, block._length, 
                          block._kind, block._isVertical, block._id)
    
@@ -197,24 +184,22 @@ class Board:
                 continue
             # for an object that is vertical, try moving up/down
             if block._isVertical:
-                    actionQueue.append((block._id, Move.Direction.UP))
-                    actionQueue.append((block._id, Move.Direction.DOWN))
+                actionQueue.append((block._id, Board.Direction.UP))
+                actionQueue.append((block._id, Board.Direction.DOWN))
             # for an object that is horizontal, try moving left/right
             else:
-                    actionQueue.append((block._id, Move.Direction.LEFT))
-                    actionQueue.append((block._id, Move.Direction.RIGHT))
+                actionQueue.append((block._id, Board.Direction.LEFT))
+                actionQueue.append((block._id, Board.Direction.RIGHT))
         
         newBoardQueue = []
         for (blockId, direction) in actionQueue:
-            newBlock = self.TryMove1(blockId, direction)
+            newBlock = self.TryMove(blockId, direction)
             if newBlock:
                 newBoard = copy.deepcopy(self)
                 newBoard.ClearBlockInData(blockId)
                 newBoard._blocks[blockId] = newBlock
                 newBoard.AddBlockInData(blockId)
-                #print " = A new state is found with hash code %d" % hash(newBoard)
-                newBoardQueue.append((blockId, direction, newBoard))
-                    
+                newBoardQueue.append((blockId, newBoard))
         return newBoardQueue
                     
     def ClearBlockInData(self, blockId):
@@ -233,14 +218,17 @@ class Board:
         elif block._kind == Block.BlockKinds.OBSTACLE: 
             c = '-'
         else:
-            c = Block.ObjNames[block._id]
-        
+            c = block._name
         if not block._isVertical:
             for i in xrange(block._length):
+                # We cannot add a block to contains an non-empty tile
+                assert self._data[block._x][block._y+i] == ' '
                 self._data[block._x][block._y+i] = c
         else:
             for i in xrange(block._length):
+                assert self._data[block._x+i][block._y] == ' '
                 self._data[block._x+i][block._y] = c        
+    
     def BlocksToData(self):
         self._data = [[' ' for _ in xrange(Board.Size)] 
                         for _ in xrange(Board.Size)]
@@ -248,7 +236,6 @@ class Board:
             self.AddBlockInData(block._id)
             
     def PrintData(self):
-        self.BlocksToData()
         sys.stdout.write('  0  1  2  3  4  5\n');    
         sys.stdout.write(''.join([' +', '-'*5, '    ', '-'*8, '+\n']))
         for i in xrange(Board.Size*Board.Size):
@@ -267,7 +254,7 @@ class Board:
             % (len(self._blocks), hash(self))
         for block in sorted(self._blocks):
             print "ID: %2d, Name: %s, Type: %12s At (%d,%d), Length %d, hash %d" \
-                % (block._id, Block.ObjNames[block._id], \
+                % (block._id, block._name, \
                    block._kind, block._x, block._y, block._length, hash(block))
             
     def __hash__(self):
@@ -285,8 +272,19 @@ class Board:
 class BoardFactory:
     @staticmethod
     def CreateEasyBoard():
+        """
+          0  1  2  3  4  5
+         +-----    --------+
+        0|AA AA AA       EE|0
+        1|   BB BB       EE|1
+        2|CC CC    FF DD DD|2
+        3|GG       FF      |3
+        4|GG    ** FF      |4
+        5|GG    ** HH HH HH|5
+         +-----------------+
+          0  1  2  3  4  5
+        """
         b = Board();
-        
         b.AddDelivery(4,2)
         b.AddTruck(0,0,False)
         b.AddBlue(1,1)
@@ -301,6 +299,18 @@ class BoardFactory:
         return b
     @staticmethod
     def CreateHardBoard2():
+        """
+          0  1  2  3  4  5
+         +-----    --------+
+        0|AA AA AA    CC DD|0
+        1|BB BB BB    CC DD|1
+        2|HH HH **       EE|2
+        3|LL GG ** II II EE|3
+        4|LL GG    FF JJ JJ|4
+        5|LL KK KK FF      |5
+         +-----------------+
+          0  1  2  3  4  5
+        """
         b = Board()
         b.AddDelivery(2,2)
         b.AddTruck(0,0,False)
@@ -321,6 +331,18 @@ class BoardFactory:
         return b
     @staticmethod
     def CreateHardBoard1():
+        """
+          0  1  2  3  4  5
+         +-----    --------+
+        0|AA BB BB BB II   |0
+        1|AA CC DD DD II   |1
+        2|AA CC EE EE GG GG|2
+        3|   CC FF FF    JJ|3
+        4|      ** KK    JJ|4
+        5|HH HH ** KK      |5
+         +-----------------+
+          0  1  2  3  4  5
+        """
         b = Board()
         b.AddDelivery(4,2)
         b.AddTruck(0,0)
@@ -341,6 +363,18 @@ class BoardFactory:
     
     @staticmethod
     def CreateHardBoard():
+        """
+          0  1  2  3  4  5
+         +-----    --------+
+        0|AA       BB DD DD|0
+        1|AA EE EE BB HH CC|1
+        2|FF FF GG GG HH CC|2
+        3|   JJ II II HH   |3
+        4|   JJ ** KK      |4
+        5|      ** KK LL LL|5
+         +-----------------+
+          0  1  2  3  4  5
+        """        
         b = Board();
         b.AddDelivery(4,2)
         b.AddPurple(0,0)
