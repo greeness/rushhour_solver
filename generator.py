@@ -1,4 +1,4 @@
-from board import Block, Board, BoardFactory
+from board import Block, Board
 import random
 from bfs import BFS
 
@@ -51,7 +51,6 @@ class Generator:
                 self.board.PrintBlocksInfo()
 
 if __name__ == "__main__":
-    #random.seed(0)
     bg = Generator()
     bg.Assemble()
     print "Done"
